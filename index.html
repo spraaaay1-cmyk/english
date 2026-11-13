@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тренажёр английского</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f2f7);
+    --text: var(--tg-theme-text-color, #111111);
+    --hint: var(--tg-theme-hint-color, #8a8a8e);
+    --accent: var(--tg-theme-button-color, #2481cc);
+    --accent-text: var(--tg-theme-button-text-color, #ffffff);
+    --good: #2fa84f;
+    --bad: #e5533d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: var(--tg-theme-bg-color, #17212b);
+      --bg2: var(--tg-theme-secondary-bg-color, #0e1621);
+      --text: var(--tg-theme-text-color, #f5f5f5);
+      --hint: var(--tg-theme-hint-color, #7d8b99);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg2); color: var(--text);
+    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 32px; }
+  h1 { font-size: 22px; margin: 4px 0 14px; }
+  h2 { font-size: 15px; color: var(--hint); font-weight: 600; text-transform: uppercase;
+    letter-spacing: .03em; margin: 22px 0 8px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: var(--bg); border-radius: 14px; padding: 12px 8px; text-align: center; }
+  .stat b { display: block; font-size: 26px; }
+  .stat span { font-size: 13px; color: var(--hint); }
+  button { font: inherit; border: 0; border-radius: 14px; padding: 15px; width: 100%;
+    cursor: pointer; }
+  .primary { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .secondary { background: var(--bg); color: var(--accent); font-weight: 600; }
+  .stack > * + * { margin-top: 8px; }
+  button:disabled { opacity: .45; }
+  .topic { background: var(--bg); border-radius: 14px; padding: 12px 14px; display: flex;
+    align-items: center; gap: 12px; }
+  .topic .ico { font-size: 22px; }
+  .topic .t { flex: 1; min-width: 0; }
+  .topic .t small { color: var(--hint); display: block; font-size: 13px; }
+  .bar { height: 5px; background: var(--bg2); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--good); }
+  .card { background: var(--bg); border-radius: 18px; padding: 22px 18px; min-height: 230px;
+    display: flex; flex-direction: column; justify-content: center; gap: 14px; text-align: center; }
+  .card .ru { font-size: 20px; }
+  .card .en { font-size: 22px; font-weight: 650; }
+  .card .hint { font-size: 14px; color: var(--hint); }
+  .label { font-size: 13px; color: var(--hint); text-transform: uppercase; letter-spacing: .04em; }
+  .row { display: flex; gap: 8px; }
+  .row > button { flex: 1; }
+  .bad { background: var(--bad); color: #fff; font-weight: 600; }
+  .good { background: var(--good); color: #fff; font-weight: 600; }
+  .say { display: flex; gap: 8px; justify-content: center; }
+  .say button { width: auto; padding: 9px 16px; background: var(--bg2); color: var(--accent); }
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    color: var(--hint); font-size: 14px; }
+  .top button { width: auto; padding: 6px 10px; background: none; color: var(--accent); }
+  .done { text-align: center; padding: 30px 10px; }
+  .done .big { font-size: 48px; }
+  .muted { color: var(--hint); font-size: 14px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main id="app"><p class="muted">Загрузка…</p></main>
+<script>
+"use strict";
+const tg = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
+
+const INTERVALS = [1, 3, 7, 14, 30, 60];   // дни до следующего повтора по «коробкам»
+const NEW_PER_DAY = 7;
+const $app = document.getElementById("app");
+let DATA = null;        // phrases.json
+let STATE = { topics: {}, meta: { streak: 0, last: "", newDay: "", newCount: 0 } };
+
+// ---------- дата ----------
+const dayStr = (d = new Date()) => {
+  const z = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+};
+const addDays = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return dayStr(d); };
+const TODAY = () => dayStr();
+
+// ---------- хранилище: облако Telegram, иначе память браузера ----------
+const store = {
+  getAll(keys) {
+    return new Promise(res => {
+      if (tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9")) {
+        tg.CloudStorage.getItems(keys, (err, vals) => res(err ? {} : (vals || {})));
+      } else {
+        const out = {};
+        for (const k of keys) { try { out[k] = localStorage.getItem("en_" + k) || ""; } catch (e) {} }
+        res(out);
+      }
+    });
+  },
+  set(key, val) {
+    if (tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9")) {
+      tg.CloudStorage.setItem(key, val, () => {});
+    }
+    try { localStorage.setItem("en_" + key, val); } catch (e) {}
+  }
+};
+// по теме — компактная строка "id:коробка:срок;..." (лимит облака — 4096 символов на ключ)
+const packTopic = m => Object.entries(m).map(([id, v]) => `${id}:${v.b}:${v.d}`).join(";");
+const unpackTopic = s => {
+  const m = {};
+  (s || "").split(";").filter(Boolean).forEach(p => { const [id, b, d] = p.split(":"); m[id] = { b: +b, d }; });
+  return m;
+};
+function saveTopic(tid) { store.set("t_" + tid, packTopic(STATE.topics[tid] || {})); }
+function saveMeta() { store.set("meta", JSON.stringify(STATE.meta)); }
+
+async function load() {
+  const r = await fetch("phrases.json?v=" + Date.now(), { cache: "no-store" });
+  DATA = await r.json();
+  const keys = ["meta", ...DATA.topics.map(t => "t_" + t.id)];
+  const vals = await store.getAll(keys);
+  try { if (vals.meta) STATE.meta = Object.assign(STATE.meta, JSON.parse(vals.meta)); } catch (e) {}
+  for (const t of DATA.topics) STATE.topics[t.id] = unpackTopic(vals["t_" + t.id]);
+}
+
+// ---------- расчёты ----------
+const allPhrases = () => DATA.topics.flatMap(t => t.phrases.map(p => ({ ...p, topic: t.id })));
+const rec = p => (STATE.topics[p.topic] || {})[p.id];
+const dueList = () => allPhrases().filter(p => { const r = rec(p); return r && r.d <= TODAY(); });
+const newLeftToday = () => STATE.meta.newDay === TODAY() ? Math.max(0, NEW_PER_DAY - STATE.meta.newCount) : NEW_PER_DAY;
+function newList(topicId) {
+  return allPhrases().filter(p => !rec(p) && (!topicId || p.topic === topicId)).slice(0, newLeftToday());
+}
+const learned = () => allPhrases().filter(p => { const r = rec(p); return r && r.b >= 2; }).length;
+function streakNow() {
+  const m = STATE.meta;
+  return (m.last === TODAY() || m.last === addDays(TODAY(), -1)) ? m.streak : 0;
+}
+function touchStreak() {
+  const m = STATE.meta, t = TODAY();
+  if (m.last === t) return;
+  m.streak = (m.last === addDays(t, -1)) ? m.streak + 1 : 1;
+  m.last = t; saveMeta();
+}
+
+// ---------- озвучка ----------
+let VOICE = null;
+function pickVoice() {
+  if (!("speechSynthesis" in window)) return;
+  const vs = speechSynthesis.getVoices().filter(v => /^en[-_]/i.test(v.lang));
+  VOICE = vs.find(v => /en[-_]GB/i.test(v.lang) && /Daniel|Serena|Kate/i.test(v.name)) ||
+          vs.find(v => /en[-_]US/i.test(v.lang) && /Samantha|Alex|Google/i.test(v.name)) ||
+          vs.find(v => /en[-_](US|GB)/i.test(v.lang)) || vs[0] || null;
+}
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text, slow) {
+  if (!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = VOICE ? VOICE.lang : "en-US"; if (VOICE) u.voice = VOICE;
+  u.rate = slow ? 0.65 : 0.9;
+  speechSynthesis.speak(u);
+}
+const haptic = t => { try { tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred(t); } catch (e) {} };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// ---------- экраны ----------
+function home() {
+  if (tg) tg.BackButton.hide();
+  const due = dueList().length, nl = newList().length;
+  const topics = DATA.topics.map(t => {
+    const total = t.phrases.length;
+    const seen = t.phrases.filter(p => (STATE.topics[t.id] || {})[p.id]).length;
+    const pct = total ? Math.round(100 * seen / total) : 0;
+    return `<div class="topic" data-topic="${t.id}">
+      <div class="ico">${t.kind === "work" ? "💼" : "✈️"}</div>
+      <div class="t">${esc(t.title)}<small>${seen} из ${total} фраз</small>
+        <div class="bar"><i style="width:${pct}%"></i></div></div>
+      <div class="muted">›</div></div>`;
+  }).join("");
+  $app.innerHTML = `
+    <h1>Мой английский</h1>
+    <div class="stats">
+      <div class="stat"><b>${learned()}</b><span>выучено</span></div>
+      <div class="stat"><b>${due}</b><span>повторить</span></div>
+      <div class="stat"><b>${streakNow()}</b><span>дней подряд</span></div>
+    </div>
+    <h2>Сегодня</h2>
+    <div class="stack">
+      <button class="primary" id="bRev" ${due ? "" : "disabled"}>Повторить фразы (${due})</button>
+      <button class="secondary" id="bNew" ${nl ? "" : "disabled"}>${nl ? `Новые фразы (${nl})` : "Новые фразы — на сегодня всё"}</button>
+    </div>
+    <h2>Темы</h2>
+    <div class="stack">${topics}</div>
+    <p class="muted" style="margin-top:18px">Сценки и разбор ошибок — в чате с ботом. Новые фразы из урока появятся здесь сами.</p>`;
+  document.getElementById("bRev").onclick = () => session(dueList(), "review");
+  document.getElementById("bNew").onclick = () => session(newList(), "new");
+  $app.querySelectorAll("[data-topic]").forEach(el => el.onclick = () => topicScreen(el.dataset.topic));
+}
+
+function topicScreen(tid) {
+  const t = DATA.topics.find(x => x.id === tid);
+  if (tg) { tg.BackButton.show(); tg.BackButton.onClick(backHome); }
+  const nl = newList(tid).length;
+  const rows = t.phrases.map(p => {
+    const r = (STATE.topics[tid] || {})[p.id];
+    const st = !r ? "новая" : r.b >= 2 ? "выучена" : "учу";
+    return `<div class="topic" data-say="${esc(p.en)}"><div class="t">${esc(p.en)}<small>${esc(p.ru)} · ${st}</small></div><div>🔊</div></div>`;
+  }).join("");
+  $app.innerHTML = `
+    <div class="top"><button id="bBack">‹ Назад</button><span>${t.kind === "work" ? "Работа" : "Поездки"}</span></div>
+    <h1>${esc(t.title)}</h1>
+    <button class="primary" id="bNewT" ${nl ? "" : "disabled"}>${nl ? `Учить новые (${nl})` : "Новых на сегодня нет"}</button>
+    <h2>Все фразы</h2><div class="stack">${rows}</div>`;
+  document.getElementById("bBack").onclick = backHome;
+  document.getElementById("bNewT").onclick = () => session(newList(tid), "new");
+  $app.querySelectorAll("[data-say]").forEach(el => el.onclick = () => speak(el.dataset.say));
+}
+function backHome() { if (tg) tg.BackButton.offClick(backHome); speechSynthesis && speechSynthesis.cancel(); home(); }
+
+function session(list, mode) {
+  if (tg) { tg.BackButton.show(); tg.BackButton.onClick(backHome); }
+  const queue = list.slice();
+  const retried = new Set();
+  let done = 0;
+  const total = queue.length;
+
+  function next() {
+    if (!queue.length) return finish();
+    const p = queue.shift();
+    mode === "new" ? showNew(p) : showReview(p);
+  }
+  function header() {
+    return `<div class="top"><button id="bBack">‹ Выйти</button><span>${Math.min(done + 1, total)} из ${total}</span></div>`;
+  }
+  function sayButtons(p) {
+    return `<div class="say"><button data-s="0">🔊 Послушать</button><button data-s="1">🐢 Медленно</button></div>`;
+  }
+  function wire(p) {
+    document.getElementById("bBack").onclick = backHome;
+    $app.querySelectorAll("[data-s]").forEach(b => b.onclick = () => speak(p.en, b.dataset.s === "1"));
+  }
+  function showNew(p) {
+    $app.innerHTML = header() + `
+      <div class="card"><div class="label">Новая фраза</div>
+        <div class="en">${esc(p.en)}</div><div class="ru">${esc(p.ru)}</div>
+        ${p.hint ? `<div class="hint">${esc(p.hint)}</div>` : ""}${sayButtons(p)}</div>
+      <p class="muted">Послушайте и повторите вслух 2–3 раза.</p>
+      <button class="primary" id="bOk">Запомнил, дальше</button>`;
+    wire(p); speak(p.en);
+    document.getElementById("bOk").onclick = () => {
+      const m = STATE.topics[p.topic] || (STATE.topics[p.topic] = {});
+      m[p.id] = { b: 0, d: addDays(TODAY(), 1) };
+      if (STATE.meta.newDay !== TODAY()) { STATE.meta.newDay = TODAY(); STATE.meta.newCount = 0; }
+      STATE.meta.newCount++;
+      saveTopic(p.topic); touchStreak(); done++; next();
+    };
+  }
+  function showReview(p) {
+    $app.innerHTML = header() + `
+      <div class="card"><div class="label">Скажите по-английски</div>
+        <div class="ru">${esc(p.ru)}</div>
+        <div id="ans" class="hidden"><div class="en">${esc(p.en)}</div>
+        ${p.hint ? `<div class="hint">${esc(p.hint)}</div>` : ""}</div>
+        <div id="sb" class="hidden">${sayButtons(p)}</div></div>
+      <p class="muted" id="tip">Скажите вслух, потом проверьте себя.</p>
+      <button class="primary" id="bShow">Показать ответ</button>
+      <div class="row hidden" id="grade"><button class="bad" id="bNo">Не помню</button><button class="good" id="bYes">Помню</button></div>`;
+    wire(p);
+    document.getElementById("bShow").onclick = () => {
+      ["ans", "sb", "grade"].forEach(id => document.getElementById(id).classList.remove("hidden"));
+      document.getElementById("bShow").classList.add("hidden");
+      document.getElementById("tip").classList.add("hidden");
+      speak(p.en);
+    };
+    document.getElementById("bYes").onclick = () => grade(p, true);
+    document.getElementById("bNo").onclick = () => grade(p, false);
+  }
+  function grade(p, ok) {
+    const m = STATE.topics[p.topic] || (STATE.topics[p.topic] = {});
+    const r = m[p.id] || { b: 0, d: TODAY() };
+    if (ok) { const b = Math.min(r.b + 1, INTERVALS.length - 1); m[p.id] = { b, d: addDays(TODAY(), INTERVALS[r.b]) }; haptic("success"); }
+    else {
+      m[p.id] = { b: 0, d: addDays(TODAY(), 1) }; haptic("warning");
+      if (!retried.has(p.id)) { retried.add(p.id); queue.push(p); }   // ещё раз в конце занятия
+    }
+    saveTopic(p.topic); touchStreak(); done++; next();
+  }
+  function finish() {
+    $app.innerHTML = `<div class="done"><div class="big">🎉</div><h1>Готово!</h1>
+      <p>${mode === "new" ? "Новые фразы добавлены — завтра повторим." : "Повторение на сегодня закончено."}</p>
+      <p class="muted">Дней подряд: ${streakNow()}</p></div>
+      <button class="primary" id="bHome">На главную</button>`;
+    document.getElementById("bHome").onclick = backHome;
+  }
+  next();
+}
+
+load().then(home).catch(e => {
+  $app.innerHTML = `<p>Не получилось загрузить фразы. Закройте и откройте тренажёр ещё раз.</p><p class="muted">${esc(e.message || e)}</p>`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "updated": "2026-11-13",
+  "topics": [
+    {
+      "id": "airport",
+      "title": "Аэропорт и паспортный контроль",
+      "kind": "travel",
+      "phrases": [
+        {"id": "ap01", "en": "Where is the check-in desk for Turkish Airlines?", "ru": "Где стойка регистрации Turkish Airlines?"},
+        {"id": "ap02", "en": "I'd like a window seat, please.", "ru": "Я бы хотел место у окна, пожалуйста.", "hint": "I'd like = I would like — вежливое «я бы хотел»"},
+        {"id": "ap03", "en": "Can I take this bag on board?", "ru": "Можно взять эту сумку в салон?"},
+        {"id": "ap04", "en": "I'm here on business.", "ru": "Я здесь по работе."},
+        {"id": "ap05", "en": "I'm here on holiday for a week.", "ru": "Я здесь в отпуске на неделю."},
+        {"id": "ap06", "en": "I'm staying at the Hilton hotel.", "ru": "Я остановлюсь в отеле Hilton."},
+        {"id": "ap07", "en": "My flight is delayed. What should I do?", "ru": "Мой рейс задерживается. Что мне делать?"},
+        {"id": "ap08", "en": "Which gate does the flight to Dubai leave from?", "ru": "От какого выхода вылетает рейс в Дубай?"},
+        {"id": "ap09", "en": "I can't find my luggage.", "ru": "Я не могу найти свой багаж."},
+        {"id": "ap10", "en": "Could you say that again more slowly, please?", "ru": "Можете повторить помедленнее, пожалуйста?", "hint": "Спасает в любой ситуации — выучить первой"},
+        {"id": "ap11", "en": "Do I need to fill in a form?", "ru": "Мне нужно заполнить бланк?"},
+        {"id": "ap12", "en": "Where can I exchange money?", "ru": "Где можно обменять деньги?"}
+      ]
+    },
+    {
+      "id": "suppliers",
+      "title": "Поставщики: цены и заказ",
+      "kind": "work",
+      "phrases": [
+        {"id": "su01", "en": "I own a small chain of stores.", "ru": "У меня небольшая сеть магазинов."},
+        {"id": "su02", "en": "What is your minimum order?", "ru": "Какой у вас минимальный заказ?"},
+        {"id": "su03", "en": "Can you send me your price list?", "ru": "Можете прислать прайс-лист?"},
+        {"id": "su04", "en": "Is there a discount for larger orders?", "ru": "Есть скидка на крупные заказы?"},
+        {"id": "su05", "en": "How long does delivery take?", "ru": "Сколько идёт доставка?"},
+        {"id": "su06", "en": "The price is a bit too high for us.", "ru": "Для нас цена немного высоковата."},
+        {"id": "su07", "en": "Can you do a better price?", "ru": "Можете сделать цену получше?", "hint": "Обычная фраза в торге — звучит нормально, не грубо"},
+        {"id": "su08", "en": "We'd like to start with a small test order.", "ru": "Мы хотели бы начать с небольшого пробного заказа."},
+        {"id": "su09", "en": "Which flavours sell best?", "ru": "Какие вкусы продаются лучше всего?"},
+        {"id": "su10", "en": "Please confirm the order by email.", "ru": "Пожалуйста, подтвердите заказ по почте."}
+      ]
+    }
+  ]
+}
