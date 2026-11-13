@@ -77,7 +77,8 @@ const tg = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData ? Tele
 if (tg) { tg.ready(); tg.expand(); }
 
 const INTERVALS = [1, 3, 7, 14, 30, 60];   // дни до следующего повтора по «коробкам»
-const NEW_PER_DAY = 7;
+const NEW_PER_DAY = 5;          // маленькими шагами: владелец бросал, когда сразу много объёма
+const MAX_SHAKY = 8;            // столько «не закреплённых» фраз — и новых не даём, сначала закрепляем
 const MAX_REVIEW = 20;   // после пропуска не заваливаем: не больше 20 повторов за раз, остальное — завтра
 const $app = document.getElementById("app");
 let DATA = null;        // phrases.json
@@ -135,7 +136,11 @@ const allPhrases = () => DATA.topics.flatMap(t => t.phrases.map(p => ({ ...p, to
 const rec = p => (STATE.topics[p.topic] || {})[p.id];
 const dueList = () => allPhrases().filter(p => { const r = rec(p); return r && r.d <= TODAY(); })
   .sort((a, b) => rec(a).d.localeCompare(rec(b).d)).slice(0, MAX_REVIEW);
-const newLeftToday = () => STATE.meta.newDay === TODAY() ? Math.max(0, NEW_PER_DAY - STATE.meta.newCount) : NEW_PER_DAY;
+const shaky = () => allPhrases().filter(p => { const r = rec(p); return r && r.b === 0; }).length;
+const newLeftToday = () => {
+  if (shaky() >= MAX_SHAKY) return 0;
+  return STATE.meta.newDay === TODAY() ? Math.max(0, NEW_PER_DAY - STATE.meta.newCount) : NEW_PER_DAY;
+};
 function newList(topicId) {
   return allPhrases().filter(p => !rec(p) && (!topicId || p.topic === topicId)).slice(0, newLeftToday());
 }
@@ -196,10 +201,11 @@ function home() {
     <h2>Сегодня</h2>
     <div class="stack">
       <button class="primary" id="bRev" ${due ? "" : "disabled"}>Повторить фразы (${due})</button>
-      <button class="secondary" id="bNew" ${nl ? "" : "disabled"}>${nl ? `Новые фразы (${nl})` : "Новые фразы — на сегодня всё"}</button>
+      <button class="secondary" id="bNew" ${nl ? "" : "disabled"}>${nl ? `Новые фразы (${nl})` : shaky() >= MAX_SHAKY ? "Новые — после закрепления" : "Новые фразы — на сегодня всё"}</button>
     </div>
     <h2>Темы</h2>
     <div class="stack">${topics}</div>
+    ${shaky() >= MAX_SHAKY ? `<p class="muted">Сначала закрепим то, что уже начали: новые фразы откроются, когда повторите эти.</p>` : ""}
     <p class="muted" style="margin-top:18px">Сценки и разбор ошибок — в чате с ботом. Новые фразы из урока появятся здесь сами.</p>`;
   document.getElementById("bRev").onclick = () => session(dueList(), "review");
   document.getElementById("bNew").onclick = () => session(newList(), "new");
