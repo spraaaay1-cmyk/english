@@ -78,6 +78,7 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const INTERVALS = [1, 3, 7, 14, 30, 60];   // дни до следующего повтора по «коробкам»
 const NEW_PER_DAY = 7;
+const MAX_REVIEW = 20;   // после пропуска не заваливаем: не больше 20 повторов за раз, остальное — завтра
 const $app = document.getElementById("app");
 let DATA = null;        // phrases.json
 let STATE = { topics: {}, meta: { streak: 0, last: "", newDay: "", newCount: 0 } };
@@ -132,7 +133,8 @@ async function load() {
 // ---------- расчёты ----------
 const allPhrases = () => DATA.topics.flatMap(t => t.phrases.map(p => ({ ...p, topic: t.id })));
 const rec = p => (STATE.topics[p.topic] || {})[p.id];
-const dueList = () => allPhrases().filter(p => { const r = rec(p); return r && r.d <= TODAY(); });
+const dueList = () => allPhrases().filter(p => { const r = rec(p); return r && r.d <= TODAY(); })
+  .sort((a, b) => rec(a).d.localeCompare(rec(b).d)).slice(0, MAX_REVIEW);
 const newLeftToday = () => STATE.meta.newDay === TODAY() ? Math.max(0, NEW_PER_DAY - STATE.meta.newCount) : NEW_PER_DAY;
 function newList(topicId) {
   return allPhrases().filter(p => !rec(p) && (!topicId || p.topic === topicId)).slice(0, newLeftToday());
