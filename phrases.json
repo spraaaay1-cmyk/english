@@ -1,23 +1,16 @@
 {
-  "updated": "2026-11-13",
+  "updated": "2026-11-15",
   "topics": [
     {
-      "id": "airport",
-      "title": "Аэропорт и паспортный контроль",
-      "kind": "travel",
+      "id": "about",
+      "title": "О себе и своём бизнесе",
+      "kind": "work",
       "phrases": [
-        {"id": "ap01", "en": "Where is the check-in desk for Turkish Airlines?", "ru": "Где стойка регистрации Turkish Airlines?"},
-        {"id": "ap02", "en": "I'd like a window seat, please.", "ru": "Я бы хотел место у окна, пожалуйста.", "hint": "I'd like = I would like — вежливое «я бы хотел»"},
-        {"id": "ap03", "en": "Can I take this bag on board?", "ru": "Можно взять эту сумку в салон?"},
-        {"id": "ap04", "en": "I'm here on business.", "ru": "Я здесь по работе."},
-        {"id": "ap05", "en": "I'm here on holiday for a week.", "ru": "Я здесь в отпуске на неделю."},
-        {"id": "ap06", "en": "I'm staying at the Hilton hotel.", "ru": "Я остановлюсь в отеле Hilton."},
-        {"id": "ap07", "en": "My flight is delayed. What should I do?", "ru": "Мой рейс задерживается. Что мне делать?"},
-        {"id": "ap08", "en": "Which gate does the flight to Dubai leave from?", "ru": "От какого выхода вылетает рейс в Дубай?"},
-        {"id": "ap09", "en": "I can't find my luggage.", "ru": "Я не могу найти свой багаж."},
-        {"id": "ap10", "en": "Could you say that again more slowly, please?", "ru": "Можете повторить помедленнее, пожалуйста?", "hint": "Спасает в любой ситуации — выучить первой"},
-        {"id": "ap11", "en": "Do I need to fill in a form?", "ru": "Мне нужно заполнить бланк?"},
-        {"id": "ap12", "en": "Where can I exchange money?", "ru": "Где можно обменять деньги?"}
+        {"id": "ab01", "en": "I live in Turkey.", "ru": "Я живу в Турции.", "hint": "в стране/городе = in, без «is»"},
+        {"id": "ab02", "en": "I have five stores.", "ru": "У меня пять магазинов."},
+        {"id": "ab03", "en": "I sell tobacco, vapes and cigarettes.", "ru": "Я продаю табак, вейпы и сигареты.", "hint": "sell — продавать, buy — покупать"},
+        {"id": "ab04", "en": "I opened my first store in 2019.", "ru": "Я открыл первый магазин в 2019 году.", "hint": "прошлое: open → opened, без did; «году» не переводим"},
+        {"id": "ab05", "en": "My suppliers are from Turkey and China.", "ru": "Мои поставщики из Турции и Китая."}
       ]
     },
     {
@@ -35,6 +28,25 @@
         {"id": "su08", "en": "We'd like to start with a small test order.", "ru": "Мы хотели бы начать с небольшого пробного заказа."},
         {"id": "su09", "en": "Which flavours sell best?", "ru": "Какие вкусы продаются лучше всего?"},
         {"id": "su10", "en": "Please confirm the order by email.", "ru": "Пожалуйста, подтвердите заказ по почте."}
+      ]
+    },
+    {
+      "id": "airport",
+      "title": "Аэропорт и паспортный контроль",
+      "kind": "travel",
+      "phrases": [
+        {"id": "ap01", "en": "Where is the check-in desk for Turkish Airlines?", "ru": "Где стойка регистрации Turkish Airlines?"},
+        {"id": "ap02", "en": "I'd like a window seat, please.", "ru": "Я бы хотел место у окна, пожалуйста.", "hint": "I'd like = I would like — вежливое «я бы хотел»"},
+        {"id": "ap03", "en": "Can I take this bag on board?", "ru": "Можно взять эту сумку в салон?"},
+        {"id": "ap04", "en": "I'm here on business.", "ru": "Я здесь по работе."},
+        {"id": "ap05", "en": "I'm here on holiday for a week.", "ru": "Я здесь в отпуске на неделю."},
+        {"id": "ap06", "en": "I'm staying at the Hilton hotel.", "ru": "Я остановлюсь в отеле Hilton."},
+        {"id": "ap07", "en": "My flight is delayed. What should I do?", "ru": "Мой рейс задерживается. Что мне делать?"},
+        {"id": "ap08", "en": "Which gate does the flight to Dubai leave from?", "ru": "От какого выхода вылетает рейс в Дубай?"},
+        {"id": "ap09", "en": "I can't find my luggage.", "ru": "Я не могу найти свой багаж."},
+        {"id": "ap10", "en": "Could you say that again more slowly, please?", "ru": "Можете повторить помедленнее, пожалуйста?", "hint": "Спасает в любой ситуации — выучить первой"},
+        {"id": "ap11", "en": "Do I need to fill in a form?", "ru": "Мне нужно заполнить бланк?"},
+        {"id": "ap12", "en": "Where can I exchange money?", "ru": "Где можно обменять деньги?"}
       ]
     }
   ]
